@@ -1,4 +1,3 @@
-
 test {
     _ = @import("aoc1/aoc1.zig");
     _ = @import("aoc2/aoc2.zig");

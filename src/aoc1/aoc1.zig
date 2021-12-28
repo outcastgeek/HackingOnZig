@@ -1,4 +1,3 @@
-
 const std = @import("std");
 const fmt = std.fmt;
 const fs = std.fs;
@@ -24,7 +23,7 @@ pub fn main() !void {
             const currentWorkingDir = fs.cwd();
             const absoluteFilePath = currentWorkingDir.realpathAlloc(aocAllocator, filePath);
             std.log.debug("File Absolute Path: {s}", .{absoluteFilePath});
-            break :p2f try currentWorkingDir.openFile(filePath, .{.read=true, .write=false});
+            break :p2f try currentWorkingDir.openFile(filePath, .{ .read = true, .write = false });
         };
         defer inputFile.close();
 
@@ -32,12 +31,12 @@ pub fn main() !void {
 
         var increaseCount: usize = 0;
         var previousMeasurement: usize = std.math.maxInt(usize);
-        var lineBuffer: [mem.page_size] u8 = undefined;
+        var lineBuffer: [mem.page_size]u8 = undefined;
         while (try fileStream.readUntilDelimiterOrEof(&lineBuffer, '\n')) |line| {
             const currentMeasurement = try std.fmt.parseInt(usize, line, 10);
             defer previousMeasurement = currentMeasurement;
             if (previousMeasurement < currentMeasurement) {
-                std.log.debug("Measurement increased from {d} to {d}\n", .{previousMeasurement, currentMeasurement});
+                std.log.debug("Measurement increased from {d} to {d}\n", .{ previousMeasurement, currentMeasurement });
                 increaseCount += 1;
             }
         }

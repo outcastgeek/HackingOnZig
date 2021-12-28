@@ -16,30 +16,15 @@ pub fn build(b: *Builder) void {
 
     // Build the Executable Targets
     {
-        buildExe(
-            b, target, mode,
-            "chp0_hello", "src/chp0/hello.zig", "run_chp0_hello"
-        );
+        buildExe(b, target, mode, "chp0_hello", "src/chp0/hello.zig", "run_chp0_hello");
         // buildExe(
         //     b, target, mode,
         //     "chp1_test_patterns", "src/chp1/test_patterns.zig", "run_chp1_test_patterns"
         // );
-        buildExe(
-            b, target, mode,
-            "aoc1", "src/aoc1/aoc1.zig", "run_aoc1"
-        );
-        buildExe(
-            b, target, mode,
-            "aoc2", "src/aoc2/aoc2.zig", "run_aoc2"
-        );
-        buildExe(
-            b, target, mode,
-            "osstuff", "src/osstuff/osstuff.zig", "run_osstuff"
-        );
-        buildExe(
-            b, target, mode,
-            "zwavef", "src/zwavef/zwavef.zig", "run_zwavef"
-        );
+        buildExe(b, target, mode, "aoc1", "src/aoc1/aoc1.zig", "run_aoc1");
+        buildExe(b, target, mode, "aoc2", "src/aoc2/aoc2.zig", "run_aoc2");
+        buildExe(b, target, mode, "osstuff", "src/osstuff/osstuff.zig", "run_osstuff");
+        buildExe(b, target, mode, "zwavef", "src/zwavef/zwavef.zig", "run_zwavef");
     }
 
     // Run all the unit tests
@@ -53,10 +38,7 @@ pub fn build(b: *Builder) void {
     }
 }
 
-fn buildExe(
-    b: *Builder, target: CrossTarget, mode: Mode,
-    name: []const u8, src: []const u8, usage: []const u8
-) void {
+fn buildExe(b: *Builder, target: CrossTarget, mode: Mode, name: []const u8, src: []const u8, usage: []const u8) void {
     const exe = b.addExecutable(name, src);
     exe.setTarget(target);
     exe.setBuildMode(mode);
