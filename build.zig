@@ -1,7 +1,8 @@
 const std = @import("std");
 const Builder = std.build.Builder;
-const CrossTarget = std.zig.CrossTarget;
-const Mode = std.builtin.Mode;
+const bldhlpr = @import("build_utils/helper.zig");
+const zigExe = bldhlpr.zigExe;
+const cExe = bldhlpr.cExe;
 
 pub fn build(b: *Builder) void {
     // Standard target option allows the person running `zig build` to choose
@@ -16,12 +17,12 @@ pub fn build(b: *Builder) void {
 
     // Build the Executable Targets
     {
-        buildExe(b, target, mode, "chp0_hello", "src/chp0/hello.zig", "run_chp0_hello");
-        //buildExe(b, target, mode, "chp1_test_patterns", "src/chp1/test_patterns.zig", "run_chp1_test_patterns");
-        buildExe(b, target, mode, "aoc1", "src/aoc1/aoc1.zig", "run_aoc1");
-        buildExe(b, target, mode, "aoc2", "src/aoc2/aoc2.zig", "run_aoc2");
-        buildExe(b, target, mode, "osstuff", "src/osstuff/osstuff.zig", "run_osstuff");
-        buildExe(b, target, mode, "zwavef", "src/zwavef/zwavef.zig", "run_zwavef");
+        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "chp0_hello", .src = "src/chp0/hello.zig", .usage = "run_chp0_hello" });
+        //zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "chp1_test_patterns", .src = "src/chp1/test_patterns.zig", .usage = "run_chp1_test_patterns"});
+        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "aoc1", .src = "src/aoc1/aoc1.zig", .usage = "run_aoc1" });
+        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "aoc2", .src = "src/aoc2/aoc2.zig", .usage = "run_aoc2" });
+        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "osstuff", .src = "src/osstuff/osstuff.zig", .usage = "run_osstuff" });
+        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "zwavef", .src = "src/zwavef/zwavef.zig", .usage = "run_zwavef" });
     }
 
     // Run all the unit tests
@@ -35,21 +36,21 @@ pub fn build(b: *Builder) void {
     }
 }
 
-fn buildExe(b: *Builder, target: CrossTarget, mode: Mode, name: []const u8, src: []const u8, usage: []const u8) void {
-    const exe = b.addExecutable(name, src);
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.install();
-    const run_cmd = exe.run();
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
-    run_cmd.step.dependOn(b.getInstallStep());
-    const help = std.fmt.allocPrint(b.allocator, "Run {s}", .{src}) catch |err| {
-        std.log.err("ALLOCATION_ERROR:::: {}", .{err});
-        return;
-    };
-    defer b.allocator.free(help);
-    const run_step = b.step(usage, help);
-    run_step.dependOn(&run_cmd.step);
-}
+// fn buildExe(b: *Builder, target: CrossTarget, mode: Mode, name: []const u8, src: []const u8, usage: []const u8) void {
+//     const exe = b.addExecutable(name, src);
+//     exe.setTarget(target);
+//     exe.setBuildMode(mode);
+//     exe.install();
+//     const run_cmd = exe.run();
+//     if (b.args) |args| {
+//         run_cmd.addArgs(args);
+//     }
+//     run_cmd.step.dependOn(b.getInstallStep());
+//     const help = std.fmt.allocPrint(b.allocator, "Run {s}", .{src}) catch |err| {
+//         std.log.err("ALLOCATION_ERROR:::: {}", .{err});
+//         return;
+//     };
+//     defer b.allocator.free(help);
+//     const run_step = b.step(usage, help);
+//     run_step.dependOn(&run_cmd.step);
+// }
