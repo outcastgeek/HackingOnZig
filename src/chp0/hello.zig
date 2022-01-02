@@ -7,4 +7,5 @@ pub fn main() void {
 
 test "Some Bogus Test" {
     try expect(1 == 1);
+    try expect(2 == 2);
 }

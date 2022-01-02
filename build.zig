@@ -17,10 +17,7 @@ pub fn build(b: *Builder) void {
     // Build the Executable Targets
     {
         buildExe(b, target, mode, "chp0_hello", "src/chp0/hello.zig", "run_chp0_hello");
-        // buildExe(
-        //     b, target, mode,
-        //     "chp1_test_patterns", "src/chp1/test_patterns.zig", "run_chp1_test_patterns"
-        // );
+        //buildExe(b, target, mode, "chp1_test_patterns", "src/chp1/test_patterns.zig", "run_chp1_test_patterns");
         buildExe(b, target, mode, "aoc1", "src/aoc1/aoc1.zig", "run_aoc1");
         buildExe(b, target, mode, "aoc2", "src/aoc2/aoc2.zig", "run_aoc2");
         buildExe(b, target, mode, "osstuff", "src/osstuff/osstuff.zig", "run_osstuff");
