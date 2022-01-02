@@ -41,6 +41,9 @@ fn buildExe(b: *Builder, target: CrossTarget, mode: Mode, name: []const u8, src:
     exe.setBuildMode(mode);
     exe.install();
     const run_cmd = exe.run();
+    if (b.args) |args| {
+        run_cmd.addArgs(args);
+    }
     run_cmd.step.dependOn(b.getInstallStep());
     const help = std.fmt.allocPrint(b.allocator, "Run {s}", .{src}) catch |err| {
         std.log.err("ALLOCATION_ERROR:::: {}", .{err});
