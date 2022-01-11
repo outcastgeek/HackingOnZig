@@ -15,7 +15,7 @@ pub fn build(b: *Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    // Build the Executable Targets
+    // Build the Zig Executable Targets
     {
         zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "chp0_hello", .src = "src/chp0/hello.zig", .usage = "run_chp0_hello" });
         //zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "chp1_test_patterns", .src = "src/chp1/test_patterns.zig", .usage = "run_chp1_test_patterns"});
@@ -23,6 +23,11 @@ pub fn build(b: *Builder) void {
         zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "aoc2", .src = "src/aoc2/aoc2.zig", .usage = "run_aoc2" });
         zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "osstuff", .src = "src/osstuff/osstuff.zig", .usage = "run_osstuff" });
         zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "zwavef", .src = "src/zwavef/zwavef.zig", .usage = "run_zwavef" });
+    }
+
+    // Build the C Executable Targets
+    {
+        cExe(.{ .builder = b, .target = target, .mode = mode, .name = "print_args", .cSrc = .{ .dir = "src/c_sample/" }, .usage = "run_print_args" });
     }
 
     // Run all the unit tests

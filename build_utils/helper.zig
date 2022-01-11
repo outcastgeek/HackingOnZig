@@ -34,9 +34,9 @@ pub fn zigExe(zp: ZigExeParams) void {
 }
 
 pub const CSrcParams = struct {
-    dir: []const u8,
-    includeDir: ?[]const u8,
-    flags: []const []const u8,
+    dir: []const u8 = &.{},
+    includeDir: []const u8 = &.{},
+    flags: [][]const u8 = &[_][]const u8{},
 };
 
 pub const ZigCExeParams = struct {
@@ -44,8 +44,8 @@ pub const ZigCExeParams = struct {
     target: CrossTarget,
     mode: Mode,
     name: []const u8,
-    cSrc: ?CSrcParams,
-    cppSrc: ?CSrcParams,
+    cSrc: ?CSrcParams = undefined,
+    cppSrc: ?CSrcParams = undefined,
     src: []const u8,
     usage: []const u8,
 };
@@ -55,18 +55,16 @@ pub fn zcExe(zcp: ZigCExeParams) void {
     exe.setTarget(zcp.target);
     exe.setBuildMode(zcp.mode);
     if (zcp.cSrc) |cSrc| {
-        var cSources = collectCSources(.{ .allocator = zcp.builder.allocator, .src = cSrc.dir, .allowed_exts = [][]const u8{ ".c" } });
-        if (cSrc.includeDir) |inclDir| {
-            exe.addIncludeDir(inclDir);
-        }
+        std.log.info("Collecting C Sources...", .{});
+        var cSources = collectCSources(.{ .builder = zcp.builder, .src = cSrc.dir, .allowed_exts = [][]const u8{".c"} });
+        exe.addIncludeDir(cSrc.includeDir);
         exe.addCSourceFiles(cSources.items, cSrc.flags);
         exe.linkLibC();
     }
     if (zcp.cppSrc) |cppSrc| {
-        var cppSources = collectCSources(.{ .allocator = zcp.builder.allocator, .src = cppSrc.dir, .allowed_exts = [][]const u8{ ".cpp", ".cxx", ".c++", ".cc" } });
-        if (cppSrc.includeDir) |inclDir| {
-            exe.addIncludeDir(inclDir);
-        }
+        std.log.info("Collecting C++ Sources...", .{});
+        var cppSources = collectCSources(.{ .builder = zcp.builder, .src = cppSrc.dir, .allowed_exts = [][]const u8{ ".cpp", ".cxx", ".c++", ".cc" } });
+        exe.addIncludeDir(cppSrc.includeDir);
         exe.addCSourceFiles(cppSources.items, cppSrc.flags);
         exe.linkLibCpp();
     }
@@ -90,8 +88,8 @@ pub const CExeParams = struct {
     target: CrossTarget,
     mode: Mode,
     name: []const u8,
-    cSrc: ?CSrcParams,
-    cppSrc: ?CSrcParams,
+    cSrc: ?CSrcParams = undefined,
+    cppSrc: ?CSrcParams = undefined,
     usage: []const u8,
 };
 
@@ -100,18 +98,16 @@ pub fn cExe(cp: CExeParams) void {
     exe.setTarget(cp.target);
     exe.setBuildMode(cp.mode);
     if (cp.cSrc) |cSrc| {
-        var cSources = collectCSources(.{ .allocator = cp.builder.allocator, .src = cSrc.dir, .allowed_exts = [][]const u8{ ".c" } });
-        if (cSrc.includeDir) |inclDir| {
-            exe.addIncludeDir(inclDir);
-        }
+        std.log.info("Collecting C Sources...", .{});
+        var cSources = collectCSources(.{ .builder = cp.builder, .src = cSrc.dir, .allowed_exts = &[_][]const u8{".c"} });
+        exe.addIncludeDir(cSrc.includeDir);
         exe.addCSourceFiles(cSources.items, cSrc.flags);
         exe.linkLibC();
     }
     if (cp.cppSrc) |cppSrc| {
-        var cppSources = collectCSources(.{ .allocator = cp.builder.allocator, .src = cppSrc.dir, .allowed_exts = [][]const u8{ ".cpp", ".cxx", ".c++", ".cc" } });
-        if (cppSrc.includeDir) |inclDir| {
-            exe.addIncludeDir(inclDir);
-        }
+        std.log.info("Collecting C++ Sources...", .{});
+        var cppSources = collectCSources(.{ .builder = cp.builder, .src = cppSrc.dir, .allowed_exts = &[_][]const u8{ ".cpp", ".cxx", ".c++", ".cc" } });
+        exe.addIncludeDir(cppSrc.includeDir);
         exe.addCSourceFiles(cppSources.items, cppSrc.flags);
         exe.linkLibCpp();
     }
@@ -121,7 +117,7 @@ pub fn cExe(cp: CExeParams) void {
         run_cmd.addArgs(args);
     }
     run_cmd.step.dependOn(cp.builder.getInstallStep());
-    const help = std.fmt.allocPrint(cp.builder.allocator, "Run {s}", .{cp.src}) catch |err| {
+    const help = std.fmt.allocPrint(cp.builder.allocator, "Run {s}", .{cp.name}) catch |err| {
         std.log.err("ALLOCATION_ERROR:::: {}", .{err});
         return;
     };
@@ -131,37 +127,67 @@ pub fn cExe(cp: CExeParams) void {
 }
 
 pub const CCppSrcParams = struct {
-    allocator: Allocator,
+    builder: *Builder,
     src: []const u8,
-    allowed_exts: [][]const u8 = [][]const u8{ ".c", ".cpp", ".cxx", ".c++", ".cc" },
+    allowed_exts: []const []const u8 = &[_][]const u8{ ".c", ".cpp", ".cxx", ".c++", ".cc" },
 };
 
 fn collectCSources(csp: CCppSrcParams) std.ArrayList([]const u8) {
-    var sources = std.ArrayList([]const u8).init(csp.allocator);
+    var sources = std.ArrayList([]const u8).init(csp.builder.allocator);
 
     // Search for all c/c++ files in the src directory and add them to the list of sources.
     {
-        var dir = fs.cwd().openDir(csp.src, .{ .iterate = true }) catch |err| {
-            std.log.err("COULD_NOT_OPEN_DIR:::: {}", .{err});
-            return;
+        const currentWorkingDir = fs.cwd();
+        const sourcePath = currentWorkingDir.realpathAlloc(csp.builder.allocator, csp.src) catch |err| {
+            std.log.err("FILE_PATH_ERROR:::: {}", .{err});
+            return sources;
         };
+        std.log.info("C/C++ Directory: {s}", .{sourcePath});
+        var dir = currentWorkingDir.openDir(sourcePath, .{ .iterate = true }) catch |err| {
+            std.log.err("COULD_NOT_OPEN_DIR:::: {}", .{err});
+            return sources;
+        };
+        defer dir.close();
         var walker = dir.walk(csp.builder.allocator) catch |err| {
             std.log.err("COULD_WALK_DIR:::: {}", .{err});
-            return;
+            return sources;
         };
         defer walker.deinit();
-        while (walker.next()) |entry| {
-            const ext = fs.path.extension(entry.basename);
-            const include_file = for (csp.allowed_exts) |e| {
-                if (std.mem.eql(u8, ext, e))
-                    break true;
-            } else false;
-            if (include_file) {
-                sources.append(entry.path) catch |err| {
-                    std.log.err("COULD_NOT_APPEND_SOURCES_ARRAY:::: {}", .{err});
-                    return;
+        while (walker.next()) |wEntry| {
+            if (wEntry) |entry| {
+                std.log.info("Entry Basename: {s}", .{entry.basename});
+                const ext = fs.path.extension(entry.basename);
+                const include_file = finc: {
+                    var ok = false;
+                    for (csp.allowed_exts) |e| {
+                        if (std.mem.eql(u8, ext, e)) {
+                            ok = true;
+                        }
+                    }
+                    break :finc ok;
                 };
+                if (include_file) {
+                    std.log.info("Entry Path: {s}", .{entry.path});
+                    const filePath = std.fmt.allocPrint(csp.builder.allocator, "{s}{s}", .{ csp.src, entry.path }) catch |err| {
+                        std.log.err("ALLOCATION_ERROR:::: {}", .{err});
+                        return sources;
+                    };
+                    std.log.info("File Path: {s}", .{filePath});
+                    sources.append(filePath) catch |err| {
+                        std.log.err("COULD_NOT_APPEND_SOURCES_ARRAY:::: {}", .{err});
+                        return sources;
+                    };
+                    // sources.append(csp.builder.dupe(entry.path)) catch |err| {
+                    //     std.log.err("COULD_NOT_APPEND_SOURCES_ARRAY:::: {}", .{err});
+                    //     return sources;
+                    // };
+                }
+            } else {
+                break;
             }
+        } else |err| {
+            std.log.err("COULD_NOT_TRAVERSE_DIR:::: {}", .{err});
+            return sources;
         }
     }
 
