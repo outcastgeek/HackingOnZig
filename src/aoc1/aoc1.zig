@@ -23,7 +23,8 @@ pub fn main() !void {
             const currentWorkingDir = fs.cwd();
             const absoluteFilePath = currentWorkingDir.realpathAlloc(aocAllocator, filePath);
             std.log.debug("File Absolute Path: {s}", .{absoluteFilePath});
-            break :p2f try currentWorkingDir.openFile(filePath, .{ .read = true, .write = false });
+            break :p2f try currentWorkingDir.openFile(filePath, .{ .mode = .read_only });
+            // break :p2f try currentWorkingDir.openFile(filePath, .{ .read = true, .write = false });
         };
         defer inputFile.close();
 

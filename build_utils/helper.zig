@@ -18,6 +18,8 @@ pub fn zigExe(zp: ZigExeParams) void {
     const exe = zp.builder.addExecutable(zp.name, zp.src);
     exe.setTarget(zp.target);
     exe.setBuildMode(zp.mode);
+    // exe.setVerboseCC(true);
+    // exe.setVerboseLink(true);
     exe.install();
     const run_cmd = exe.run();
     if (zp.builder.args) |args| {
@@ -36,7 +38,7 @@ pub fn zigExe(zp: ZigExeParams) void {
 pub const CSrcParams = struct {
     dir: []const u8 = &.{},
     includeDir: []const u8 = &.{},
-    flags: [][]const u8 = &[_][]const u8{},
+    flags: []const []const u8 = &[_][]const u8{},
 };
 
 pub const ZigCExeParams = struct {
@@ -103,13 +105,19 @@ pub fn cExe(cp: CExeParams) void {
         exe.addIncludeDir(cSrc.includeDir);
         exe.addCSourceFiles(cSources.items, cSrc.flags);
         exe.linkLibC();
+        // exe.setVerboseCC(true);
+        // exe.setVerboseLink(true);
     }
     if (cp.cppSrc) |cppSrc| {
         std.log.info("Collecting C++ Sources...", .{});
         var cppSources = collectCSources(.{ .builder = cp.builder, .src = cppSrc.dir, .allowed_exts = &[_][]const u8{ ".cpp", ".cxx", ".c++", ".cc" } });
         exe.addIncludeDir(cppSrc.includeDir);
         exe.addCSourceFiles(cppSources.items, cppSrc.flags);
+        exe.linkLibC();
         exe.linkLibCpp();
+        // exe.linkSystemLibrary("c++");
+        // exe.setVerboseCC(true);
+        // exe.setVerboseLink(true);
     }
     exe.install();
     const run_cmd = exe.run();

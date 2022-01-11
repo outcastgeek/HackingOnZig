@@ -1,0 +1,19 @@
+
+#include <stdint.h>
+
+void main(void) 
+{
+    register uint8_t i;
+    volatile uint8_t j;
+    j = 0;
+    for (i = 0; i < 10; i++)
+    {
+        j++;
+    }
+}
+
+// zig cc --target=avr-freestanding-eabihf freestanding.c
+// zig cc --target=avr-freestanding-none freestanding.c
+// zig cc --target=avr-freestanding freestanding.c
+// zig build-lib src/main.zig -target avr-freestanding-eabihf -O ReleaseSmall --strip
+// zig build-obj src/main.zig -target avr-freestanding-eabihf -O ReleaseSmall --strip

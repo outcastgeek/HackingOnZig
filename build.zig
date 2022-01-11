@@ -25,9 +25,11 @@ pub fn build(b: *Builder) void {
         zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "zwavef", .src = "src/zwavef/zwavef.zig", .usage = "run_zwavef" });
     }
 
-    // Build the C Executable Targets
+    // Build the C/C++ Executable Targets
     {
-        cExe(.{ .builder = b, .target = target, .mode = mode, .name = "print_args", .cSrc = .{ .dir = "src/c_sample/" }, .usage = "run_print_args" });
+        cExe(.{ .builder = b, .target = target, .mode = mode, .name = "print_args", .cSrc = .{ .dir = "src/c_sample/", .flags = &.{"-std=c17"} }, .usage = "run_print_args" });
+        cExe(.{ .builder = b, .target = target, .mode = mode, .name = "check_primes", .cppSrc = .{ .dir = "src/cpp_sample/", .flags = &.{ "-Wall", "-Wextra", "-Werror=return-type", "--stdlib=libc++", "-std=c++17" } }, .usage = "run_check_primes" });
+        cExe(.{ .builder = b, .target = target, .mode = mode, .name = "cpp20_features", .cppSrc = .{ .dir = "src/cpp20/", .flags = &.{ "-Wall", "-Wextra", "-Werror=return-type", "--stdlib=libc++", "-std=c++20" } }, .usage = "run_cpp20_features" });
     }
 
     // Run all the unit tests

@@ -2,7 +2,10 @@ const std = @import("std");
 const debug = std.debug;
 const panic = std.debug.panic;
 const assert = debug.assert;
-const BuffMap = std.BufMap;
+const fs = std.fs;
+const process = std.process;
+// const BuffMap = std.BufMap;
+const EnvMap = std.process.EnvMap;
 const Allocator = std.mem.Allocator;
 const c = std.c;
 const mem = std.mem;
@@ -16,7 +19,8 @@ pub fn main() !void {
 
     builtForOs();
 
-    var env_map = BuffMap.init(allocator);
+    // var env_map = BuffMap.init(allocator);
+    var env_map = EnvMap.init(allocator);
     defer env_map.deinit();
     try env_map.put("CURRENT_DIR", "`pwd`");
     var code: u8 = undefined;
@@ -47,7 +51,8 @@ pub fn main() !void {
 
 pub fn execCmd( // Borrowed from zig std build `execFromStep` and `execAllowFail`
     allocator: Allocator,
-    env_map: *BuffMap,
+    // env_map: *BuffMap,
+    env_map: *EnvMap,
     argv: []const []const u8,
     out_code: *u8,
     stderr_behavior: std.ChildProcess.StdIo,
@@ -55,9 +60,11 @@ pub fn execCmd( // Borrowed from zig std build `execFromStep` and `execAllowFail
     assert(argv.len != 0);
 
     const max_output_size = 400 * 1024;
-    const child = try std.ChildProcess.init(argv, allocator);
-    defer child.deinit();
+    // const child = try std.ChildProcess.init(argv, allocator);
+    var child = std.ChildProcess.init(argv, allocator);
+    // defer child.deinit();
 
+    child.cwd = try fs.cwd().realpathAlloc(allocator, "");
     child.stdin_behavior = .Ignore;
     child.stdout_behavior = .Pipe;
     child.stderr_behavior = stderr_behavior;

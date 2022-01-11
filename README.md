@@ -24,3 +24,11 @@ alternatively
 ```bash
 $ ./zig-out/bin/aoc1 ./src/aoc1/input.txt # run a target with input
 ```
+
+## Miscellaneous
+
+* [Zig Crash Course](https://ikrima.dev/dev-notes/zig/zig-crash-course/)
+* [All Your Codebase Are Belong To Us](https://allyourcodebase.com)
+* [brew edit zig](https://github.com/ziglang/zig/issues/11938#issuecomment-1166650685)
+* [Computer Programming with the Nim Programming Language](https://ssalewski.de/nimprogramming.html)
+* [Nim Resources](https://ikrima.dev/dev-notes/nim/)
