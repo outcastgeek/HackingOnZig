@@ -151,7 +151,8 @@ fn collectCSources(csp: CCppSrcParams) std.ArrayList([]const u8) {
             return sources;
         };
         std.log.info("C/C++ Directory: {s}", .{sourcePath});
-        var dir = currentWorkingDir.openDir(sourcePath, .{ .iterate = true }) catch |err| {
+        // var dir = currentWorkingDir.openDir(sourcePath, .{ .iterate = true }) catch |err| {
+        var dir = currentWorkingDir.openIterableDir(sourcePath, .{}) catch |err| {
             std.log.err("COULD_NOT_OPEN_DIR:::: {}", .{err});
             return sources;
         };

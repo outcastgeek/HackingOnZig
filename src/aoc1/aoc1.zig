@@ -21,8 +21,9 @@ pub fn main() !void {
             const filePath = mem.sliceTo(arg2, 0);
             std.log.debug("FilePath: {s}\n", .{filePath});
             const currentWorkingDir = fs.cwd();
-            const absoluteFilePath = currentWorkingDir.realpathAlloc(aocAllocator, filePath);
-            std.log.debug("File Absolute Path: {s}", .{absoluteFilePath});
+            const absoluteFilePath = try currentWorkingDir.realpathAlloc(aocAllocator, filePath);
+            // std.log.debug("File Absolute Path: {s}", .{absoluteFilePath}); // TODO: Not sure why this is broken?
+            std.log.debug("File Absolute Path: {any}", .{absoluteFilePath});
             break :p2f try currentWorkingDir.openFile(filePath, .{ .mode = .read_only });
             // break :p2f try currentWorkingDir.openFile(filePath, .{ .read = true, .write = false });
         };
