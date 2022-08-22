@@ -22,6 +22,7 @@ pub fn build(b: *Builder) void {
         zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "aoc1", .src = "src/aoc1/aoc1.zig", .usage = "run_aoc1" });
         zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "aoc2", .src = "src/aoc2/aoc2.zig", .usage = "run_aoc2" });
         zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "osstuff", .src = "src/osstuff/osstuff.zig", .usage = "run_osstuff" });
+        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "zsrvr", .src = "src/zsrvr/zsrvr.zig", .usage = "run_zsrvr", .use_stage1 = true });
         zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "zwavef", .src = "src/zwavef/zwavef.zig", .usage = "run_zwavef" });
     }
 

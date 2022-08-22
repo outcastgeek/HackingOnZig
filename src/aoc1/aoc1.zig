@@ -29,7 +29,8 @@ pub fn main() !void {
         };
         defer inputFile.close();
 
-        const fileStream = io.bufferedReader(inputFile.reader()).reader();
+        var bufferFileReader = io.bufferedReader(inputFile.reader());
+        const fileStream = bufferFileReader.reader();
 
         var increaseCount: usize = 0;
         var previousMeasurement: usize = std.math.maxInt(usize);

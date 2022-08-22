@@ -12,6 +12,7 @@ pub const ZigExeParams = struct {
     name: []const u8,
     src: []const u8,
     usage: []const u8,
+    use_stage1: bool = false,
 };
 
 pub fn zigExe(zp: ZigExeParams) void {
@@ -20,6 +21,7 @@ pub fn zigExe(zp: ZigExeParams) void {
     exe.setBuildMode(zp.mode);
     // exe.setVerboseCC(true);
     // exe.setVerboseLink(true);
+    exe.use_stage1 = zp.use_stage1;
     exe.install();
     const run_cmd = exe.run();
     if (zp.builder.args) |args| {
