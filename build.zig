@@ -3,6 +3,7 @@ const Builder = std.build.Builder;
 const bldhlpr = @import("build_utils/helper.zig");
 const zigExe = bldhlpr.zigExe;
 const cExe = bldhlpr.cExe;
+const zcExe = bldhlpr.zcExe;
 
 pub fn build(b: *Builder) void {
     // Standard target option allows the person running `zig build` to choose
@@ -17,20 +18,156 @@ pub fn build(b: *Builder) void {
 
     // Build the Zig Executable Targets
     {
-        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "chp0_hello", .src = "src/chp0/hello.zig", .usage = "run_chp0_hello" });
-        //zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "chp1_test_patterns", .src = "src/chp1/test_patterns.zig", .usage = "run_chp1_test_patterns"});
-        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "aoc1", .src = "src/aoc1/aoc1.zig", .usage = "run_aoc1" });
-        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "aoc2", .src = "src/aoc2/aoc2.zig", .usage = "run_aoc2" });
-        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "osstuff", .src = "src/osstuff/osstuff.zig", .usage = "run_osstuff" });
-        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "zsrvr", .src = "src/zsrvr/zsrvr.zig", .usage = "run_zsrvr", .use_stage1 = true });
-        zigExe(.{ .builder = b, .target = target, .mode = mode, .name = "zwavef", .src = "src/zwavef/zwavef.zig", .usage = "run_zwavef" });
+        zigExe(.{
+            .builder = b,
+            .target = target,
+            .mode = mode,
+            .name = "chp0_hello",
+            .src = "src/chp0/hello.zig",
+            .usage = "run_chp0_hello",
+        });
+        //zigExe(.{
+        //    .builder = b,
+        //    .target = target,
+        //    .mode = mode,
+        //    .name = "chp1_test_patterns",
+        //    .src = "src/chp1/test_patterns.zig",
+        //    .usage = "run_chp1_test_patterns",
+        //});
+        zigExe(.{
+            .builder = b,
+            .target = target,
+            .mode = mode,
+            .name = "aoc1",
+            .src = "src/aoc1/aoc1.zig",
+            .usage = "run_aoc1",
+        });
+        zigExe(.{
+            .builder = b,
+            .target = target,
+            .mode = mode,
+            .name = "aoc2",
+            .src = "src/aoc2/aoc2.zig",
+            .usage = "run_aoc2",
+        });
+        zigExe(.{
+            .builder = b,
+            .target = target,
+            .mode = mode,
+            .name = "osstuff",
+            .src = "src/osstuff/osstuff.zig",
+            .usage = "run_osstuff",
+        });
+        //zigExe(.{
+        //    .builder = b,
+        //    .target = target,
+        //    .mode = mode,
+        //    .name = "zintrfcs",
+        //    .src = "src/zintrfcs/zintrfcs.zig",
+        //    .usage = "run_zintrfcs",
+        //});
+        zigExe(.{
+            .builder = b,
+            .target = target,
+            .mode = mode,
+            .name = "zsrvr",
+            .src = "src/zsrvr/zsrvr.zig",
+            .usage = "run_zsrvr",
+            .use_stage1 = true,
+        });
+        zigExe(.{
+            .builder = b,
+            .target = target,
+            .mode = mode,
+            .name = "zwavef",
+            .src = "src/zwavef/zwavef.zig",
+            .usage = "run_zwavef",
+        });
+        //zcExe(.{
+        //    .builder = b,
+        //    .target = target,
+        //    .mode = mode,
+        //    .name = "zc_interop",
+        //    .src = "src/zc_interop/zc_interop.zig",
+        //    .ccSrc = .{
+        //        .cSrc = .{
+        //            .dir = "src/zc_interop/clib/",
+        //            .includeDir = "src/zc_interop/clib/include/",
+        //            .flags = &.{
+        //                "-std=c11",
+        //            },
+        //        },
+        //    },
+        //    .usage = "run_zc_interop",
+        //});
     }
 
     // Build the C/C++ Executable Targets
     {
-        cExe(.{ .builder = b, .target = target, .mode = mode, .name = "print_args", .cSrc = .{ .dir = "src/c_sample/", .flags = &.{"-std=c17"} }, .usage = "run_print_args" });
-        cExe(.{ .builder = b, .target = target, .mode = mode, .name = "check_primes", .cppSrc = .{ .dir = "src/cpp_sample/", .flags = &.{ "-Wall", "-Wextra", "-Werror=return-type", "--stdlib=libc++", "-std=c++17" } }, .usage = "run_check_primes" });
-        cExe(.{ .builder = b, .target = target, .mode = mode, .name = "cpp20_features", .cppSrc = .{ .dir = "src/cpp20/", .flags = &.{ "-Wall", "-Wextra", "-Werror=return-type", "--stdlib=libc++", "-std=c++20" } }, .usage = "run_cpp20_features" });
+        //cExe(.{
+        //    .builder = b,
+        //    .target = target,
+        //    .mode = mode,
+        //    .name = "weird_args",
+        //    .src = .{
+        //        .cSrc = .{
+        //            .dir = "src/weird_args/",
+        //            .flags = &.{"-std=c17"},
+        //        },
+        //    },
+        //    .usage = "run_weird_args",
+        //});
+        //cExe(.{
+        //    .builder = b,
+        //    .target = target,
+        //    .mode = mode,
+        //    .name = "print_args",
+        //    .src = .{
+        //        .cSrc = .{
+        //            .dir = "src/c_sample/",
+        //            .flags = &.{"-std=c17"},
+        //        },
+        //    },
+        //    .usage = "run_print_args",
+        //});
+        cExe(.{
+            .builder = b,
+            .target = target,
+            .mode = mode,
+            .name = "check_primes",
+            .src = .{
+                .cppSrc = .{
+                    .dir = "src/cpp_sample/",
+                    .flags = &.{
+                        "-Wall",
+                        "-Wextra",
+                        "-Werror=return-type",
+                        "--stdlib=libc++",
+                        "-std=c++17",
+                    },
+                },
+            },
+            .usage = "run_check_primes",
+        });
+        cExe(.{
+            .builder = b,
+            .target = target,
+            .mode = mode,
+            .name = "cpp20_features",
+            .src = .{
+                .cppSrc = .{
+                    .dir = "src/cpp20/",
+                    .flags = &.{
+                        "-Wall",
+                        "-Wextra",
+                        "-Werror=return-type",
+                        "--stdlib=libc++",
+                        "-std=c++20",
+                    },
+                },
+            },
+            .usage = "run_cpp20_features",
+        });
     }
 
     // Run all the unit tests

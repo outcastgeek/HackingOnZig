@@ -1,9 +1,14 @@
 const std = @import("std");
 const fs = std.fs;
 const Builder = std.build.Builder;
+const LibExeObjStep = std.build.LibExeObjStep;
 const CrossTarget = std.zig.CrossTarget;
 const Mode = std.builtin.Mode;
 const Allocator = std.mem.Allocator;
+const strsources = @import("strsources.zig");
+const csources = @import("csources.zig");
+const SrcType = csources.SrcType;
+pub const getLines = strsources.getLines;
 
 pub const ZigExeParams = struct {
     builder: *Builder,
@@ -37,41 +42,96 @@ pub fn zigExe(zp: ZigExeParams) void {
     run_step.dependOn(&run_cmd.step);
 }
 
-pub const CSrcParams = struct {
-    dir: []const u8 = &.{},
-    includeDir: []const u8 = &.{},
-    flags: []const []const u8 = &[_][]const u8{},
+pub const ZigLibParams = struct {
+    builder: *Builder,
+    target: CrossTarget,
+    mode: Mode,
+    name: []const u8,
+    src: []const u8,
+    usage: []const u8,
+    static: bool = true,
+    kind: LibExeObjStep.SharedLibKind = LibExeObjStep.SharedLibKind.unversioned,
+    use_stage1: bool = false,
 };
+
+pub fn zigLib(zp: ZigLibParams) *LibExeObjStep {
+    const lib = libtype: {
+        var l: *LibExeObjStep = undefined;
+        if (zp.static) {
+            l = zp.builder.addStaticLibrary(zp.name, zp.src);
+        } else {
+            l = zp.builder.addSharedLibrary(zp.name, zp.src, zp.kind);
+        }
+        break :libtype l;
+    };
+    lib.setTarget(zp.target);
+    lib.setBuildMode(zp.mode);
+    // lib.setVerboseCC(true);
+    // lib.setVerboseLink(true);
+    lib.use_stage1 = zp.use_stage1;
+    lib.install();
+    const help = std.fmt.allocPrint(zp.builder.allocator, "Build {s}", .{zp.src}) catch |err| {
+        std.log.err("ALLOCATION_ERROR:::: {}", .{err});
+        return lib;
+    };
+    defer zp.builder.allocator.free(help);
+    const lib_step = zp.builder.step(zp.usage, help);
+    lib_step.dependOn(zp.builder.getInstallStep());
+
+    return lib;
+}
 
 pub const ZigCExeParams = struct {
     builder: *Builder,
     target: CrossTarget,
     mode: Mode,
     name: []const u8,
-    cSrc: ?CSrcParams = undefined,
-    cppSrc: ?CSrcParams = undefined,
     src: []const u8,
+    ccSrc: ?csources.Src,
+    libs: ?[]*LibExeObjStep = undefined,
     usage: []const u8,
+    use_stage1: bool = false,
 };
 
 pub fn zcExe(zcp: ZigCExeParams) void {
     const exe = zcp.builder.addExecutable(zcp.name, zcp.src);
     exe.setTarget(zcp.target);
     exe.setBuildMode(zcp.mode);
-    if (zcp.cSrc) |cSrc| {
-        std.log.info("Collecting C Sources...", .{});
-        var cSources = collectCSources(.{ .builder = zcp.builder, .src = cSrc.dir, .allowed_exts = [][]const u8{".c"} });
-        exe.addIncludeDir(cSrc.includeDir);
-        exe.addCSourceFiles(cSources.items, cSrc.flags);
-        exe.linkLibC();
+
+    if (zcp.ccSrc) |ccSrc| {
+        //const cclibName = std.mem.concat(zcp.builder.allocator, u8, &.{
+        //    zcp.name,
+        //    "vendor",
+        //}) catch unreachable;
+        //const cclib = cLib(.{
+        //    .builder = zcp.builder,
+        //    .target = zcp.target,
+        //    .mode = zcp.mode,
+        //    .name = cclibName,
+        //    .src = ccSrc,
+        //    .usage = "",
+        //    .static = true,
+        //    .libs = zcp.libs,
+        //});
+        //ccSrc.addIncludes(exe);
+        //exe.linkLibrary(cclib);
+        var cs = csources.init(zcp.builder.allocator);
+        cs.collectInputs(.{
+            .libExeObjStep = exe,
+            .libs = zcp.libs,
+            .src = ccSrc,
+        });
     }
-    if (zcp.cppSrc) |cppSrc| {
-        std.log.info("Collecting C++ Sources...", .{});
-        var cppSources = collectCSources(.{ .builder = zcp.builder, .src = cppSrc.dir, .allowed_exts = [][]const u8{ ".cpp", ".cxx", ".c++", ".cc" } });
-        exe.addIncludeDir(cppSrc.includeDir);
-        exe.addCSourceFiles(cppSources.items, cppSrc.flags);
-        exe.linkLibCpp();
+
+    if (zcp.libs) |libs| {
+        for (libs) |l| {
+            exe.linkLibrary(l);
+        }
     }
+
+    // exe.setVerboseCC(true);
+    // exe.setVerboseLink(true);
+    exe.use_stage1 = zcp.use_stage1;
     exe.install();
     const run_cmd = exe.run();
     if (zcp.builder.args) |args| {
@@ -87,40 +147,84 @@ pub fn zcExe(zcp: ZigCExeParams) void {
     run_step.dependOn(&run_cmd.step);
 }
 
+pub const ZigCLibParams = struct {
+    builder: *Builder,
+    target: CrossTarget,
+    mode: Mode,
+    name: []const u8,
+    src: []const u8,
+    usage: []const u8,
+    static: bool = true,
+    kind: LibExeObjStep.SharedLibKind = LibExeObjStep.SharedLibKind.unversioned,
+    use_stage1: bool = false,
+};
+
+pub fn zcLib(zcp: ZigCLibParams) *LibExeObjStep {
+    const lib = libtype: {
+        var l: *LibExeObjStep = undefined;
+        if (zcp.static) {
+            l = zcp.builder.addStaticLibrary(zcp.name, zcp.src);
+        } else {
+            l = zcp.builder.addSharedLibrary(zcp.name, zcp.src, zcp.kind);
+        }
+        break :libtype l;
+    };
+    lib.setTarget(zcp.target);
+    lib.setBuildMode(zcp.mode);
+
+    if (zcp.ccSrc) |ccSrc| {
+        var cs = csources.init(zcp.builder.allocator);
+        cs.collectInputs(.{
+            .libExeObjStep = lib,
+            .libs = zcp.libs,
+            .src = ccSrc,
+        });
+    }
+
+    if (zcp.libs) |libs| {
+        for (libs) |l| {
+            lib.linkLibrary(l);
+        }
+    }
+
+    // lib.setVerboseCC(true);
+    // lib.setVerboseLink(true);
+    lib.use_stage1 = zcp.use_stage1;
+    lib.install();
+    const help = std.fmt.allocPrint(zcp.builder.allocator, "Build {s}", .{zcp.src}) catch |err| {
+        std.log.err("ALLOCATION_ERROR:::: {}", .{err});
+        return lib;
+    };
+    defer zcp.builder.allocator.free(help);
+    const lib_step = zcp.builder.step(zcp.usage, help);
+    lib_step.dependOn(zcp.builder.getInstallStep());
+
+    return lib;
+}
+
 pub const CExeParams = struct {
     builder: *Builder,
     target: CrossTarget,
     mode: Mode,
     name: []const u8,
-    cSrc: ?CSrcParams = undefined,
-    cppSrc: ?CSrcParams = undefined,
+    src: csources.Src,
     usage: []const u8,
+    static: bool = true,
+    libs: ?[]*LibExeObjStep = undefined,
 };
 
 pub fn cExe(cp: CExeParams) void {
-    const exe = cp.builder.addExecutable(cp.name, null);
+    var exe = cp.builder.addExecutable(cp.name, null);
     exe.setTarget(cp.target);
     exe.setBuildMode(cp.mode);
-    if (cp.cSrc) |cSrc| {
-        std.log.info("Collecting C Sources...", .{});
-        var cSources = collectCSources(.{ .builder = cp.builder, .src = cSrc.dir, .allowed_exts = &[_][]const u8{".c"} });
-        exe.addIncludeDir(cSrc.includeDir);
-        exe.addCSourceFiles(cSources.items, cSrc.flags);
-        exe.linkLibC();
-        // exe.setVerboseCC(true);
-        // exe.setVerboseLink(true);
-    }
-    if (cp.cppSrc) |cppSrc| {
-        std.log.info("Collecting C++ Sources...", .{});
-        var cppSources = collectCSources(.{ .builder = cp.builder, .src = cppSrc.dir, .allowed_exts = &[_][]const u8{ ".cpp", ".cxx", ".c++", ".cc" } });
-        exe.addIncludeDir(cppSrc.includeDir);
-        exe.addCSourceFiles(cppSources.items, cppSrc.flags);
-        exe.linkLibC();
-        exe.linkLibCpp();
-        // exe.linkSystemLibrary("c++");
-        // exe.setVerboseCC(true);
-        // exe.setVerboseLink(true);
-    }
+
+    var cs = csources.init(cp.builder.allocator);
+    cs.collectInputs(.{
+        .libExeObjStep = exe,
+        .libs = cp.libs,
+        .src = cp.src,
+    });
+
     exe.install();
     const run_cmd = exe.run();
     if (cp.builder.args) |args| {
@@ -136,10 +240,55 @@ pub fn cExe(cp: CExeParams) void {
     run_step.dependOn(&run_cmd.step);
 }
 
+pub const CLibParams = struct {
+    builder: *Builder,
+    target: CrossTarget,
+    mode: Mode,
+    name: []const u8,
+    src: csources.Src,
+    usage: []const u8,
+    static: bool = true,
+    libs: ?[]*LibExeObjStep = undefined,
+    kind: LibExeObjStep.SharedLibKind = LibExeObjStep.SharedLibKind.unversioned,
+};
+
+pub fn cLib(cp: CLibParams) *LibExeObjStep {
+    const lib = libtype: {
+        var l: *LibExeObjStep = undefined;
+        if (cp.static) {
+            l = cp.builder.addStaticLibrary(cp.name, null);
+        } else {
+            l = cp.builder.addSharedLibrary(cp.name, null, cp.kind);
+        }
+        break :libtype l;
+    };
+    lib.setTarget(cp.target);
+    lib.setBuildMode(cp.mode);
+
+    var cs = csources.init(cp.builder.allocator);
+    cs.collectInputs(.{
+        .libExeObjStep = lib,
+        .libs = cp.libs,
+        .src = cp.src,
+    });
+
+    lib.install();
+    const help = std.fmt.allocPrint(cp.builder.allocator, "Run {s}", .{cp.name}) catch |err| {
+        std.log.err("ALLOCATION_ERROR:::: {}", .{err});
+        return lib;
+    };
+    defer cp.builder.allocator.free(help);
+    const lib_step = cp.builder.step(cp.usage, help);
+    lib_step.dependOn(cp.builder.getInstallStep());
+
+    return lib;
+}
+
 pub const CCppSrcParams = struct {
     builder: *Builder,
     src: []const u8,
-    allowed_exts: []const []const u8 = &[_][]const u8{ ".c", ".cpp", ".cxx", ".c++", ".cc" },
+    recurse: bool = false,
+    allowed_exts: []const []const u8 = &.{ ".c", ".cpp", ".cxx", ".c++", ".cc" },
 };
 
 fn collectCSources(csp: CCppSrcParams) std.ArrayList([]const u8) {
@@ -159,15 +308,13 @@ fn collectCSources(csp: CCppSrcParams) std.ArrayList([]const u8) {
             return sources;
         };
         defer dir.close();
-        var walker = dir.walk(csp.builder.allocator) catch |err| {
-            std.log.err("COULD_WALK_DIR:::: {}", .{err});
-            return sources;
-        };
-        defer walker.deinit();
+
+        var walker = dir.iterate();
         while (walker.next()) |wEntry| {
-            if (wEntry) |entry| {
-                std.log.info("Entry Basename: {s}", .{entry.basename});
-                const ext = fs.path.extension(entry.basename);
+            if (wEntry) |cFile| {
+                const fileName = cFile.name;
+                // std.log.info("File Name: {s} with Type {any}", .{fileName, cFile.kind});
+                const ext = fs.path.extension(fileName);
                 const include_file = finc: {
                     var ok = false;
                     for (csp.allowed_exts) |e| {
@@ -178,20 +325,15 @@ fn collectCSources(csp: CCppSrcParams) std.ArrayList([]const u8) {
                     break :finc ok;
                 };
                 if (include_file) {
-                    std.log.info("Entry Path: {s}", .{entry.path});
-                    const filePath = std.fmt.allocPrint(csp.builder.allocator, "{s}{s}", .{ csp.src, entry.path }) catch |err| {
-                        std.log.err("ALLOCATION_ERROR:::: {}", .{err});
+                    const filePath = std.mem.concat(csp.builder.allocator, u8, &.{ sourcePath, "/", cFile.name }) catch |err| {
+                        std.log.err("COULD_NOT_INFER_FILE_PATH:::: {}", .{err});
                         return sources;
                     };
-                    std.log.info("File Path: {s}", .{filePath});
+                    // std.log.info("File Path: {s}", .{filePath});
                     sources.append(filePath) catch |err| {
                         std.log.err("COULD_NOT_APPEND_SOURCES_ARRAY:::: {}", .{err});
                         return sources;
                     };
-                    // sources.append(csp.builder.dupe(entry.path)) catch |err| {
-                    //     std.log.err("COULD_NOT_APPEND_SOURCES_ARRAY:::: {}", .{err});
-                    //     return sources;
-                    // };
                 }
             } else {
                 break;
@@ -201,6 +343,63 @@ fn collectCSources(csp: CCppSrcParams) std.ArrayList([]const u8) {
             return sources;
         }
     }
+
+    // {
+    //     var walkerFlatFoot = dir.iterate();
+    //     while (walkerFlatFoot.next()) |entry| {
+    //         if (entry) |cFile| {
+    //             std.debug.print("Flat Dir Content:::: {any}", .{cFile});
+    //         } else {
+    //             break;
+    //         }
+    //     } else |err| {
+    //         std.debug.print("COULD_LIST_DIR:::: {any}", .{err});
+    //         return sources;
+    //     }
+    // }
+
+    //     var walker = dir.walk(csp.builder.allocator) catch |err| {
+    //         std.log.err("COULD_WALK_DIR:::: {}", .{err});
+    //         return sources;
+    //     };
+    //     defer walker.deinit();
+    //     while (walker.next()) |wEntry| {
+    //         if (wEntry) |entry| {
+    //             std.log.info("Entry Basename: {s}", .{entry.basename});
+    //             const ext = fs.path.extension(entry.basename);
+    //             const include_file = finc: {
+    //                 var ok = false;
+    //                 for (csp.allowed_exts) |e| {
+    //                     if (std.mem.eql(u8, ext, e)) {
+    //                         ok = true;
+    //                     }
+    //                 }
+    //                 break :finc ok;
+    //             };
+    //             if (include_file) {
+    //                 std.log.info("Entry Path: {s}", .{entry.path});
+    //                 const filePath = std.fmt.allocPrint(csp.builder.allocator, "{s}{s}", .{ csp.src, entry.path }) catch |err| {
+    //                     std.log.err("ALLOCATION_ERROR:::: {}", .{err});
+    //                     return sources;
+    //                 };
+    //                 std.log.info("File Path: {s}", .{filePath});
+    //                 sources.append(filePath) catch |err| {
+    //                     std.log.err("COULD_NOT_APPEND_SOURCES_ARRAY:::: {}", .{err});
+    //                     return sources;
+    //                 };
+    //                 // sources.append(csp.builder.dupe(entry.path)) catch |err| {
+    //                 //     std.log.err("COULD_NOT_APPEND_SOURCES_ARRAY:::: {}", .{err});
+    //                 //     return sources;
+    //                 // };
+    //             }
+    //         } else {
+    //             break;
+    //         }
+    //     } else |err| {
+    //         std.log.err("COULD_NOT_TRAVERSE_DIR:::: {}", .{err});
+    //         return sources;
+    //     }
+    // }
 
     return sources;
 }
