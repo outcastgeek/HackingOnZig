@@ -147,7 +147,8 @@ pub fn collectInputs(self: *Self, params: CollectParams) void {
             break :srcs csFiles;
         };
         if (src.includeDir) |includeDir| {
-            params.libExeObjStep.addIncludeDir(includeDir);
+            // params.libExeObjStep.addIncludeDir(includeDir);
+            params.libExeObjStep.addIncludePath(includeDir);
         }
         params.libExeObjStep.addCSourceFiles(sources, src.flags);
     }

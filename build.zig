@@ -58,6 +58,14 @@ pub fn build(b: *Builder) void {
             .src = "src/osstuff/osstuff.zig",
             .usage = "run_osstuff",
         });
+        zigExe(.{
+            .builder = b,
+            .target = target,
+            .mode = mode,
+            .name = "multiarr",
+            .src = "src/multiarr/multiarr.zig",
+            .usage = "run_multiarr",
+        });
         //zigExe(.{
         //    .builder = b,
         //    .target = target,
