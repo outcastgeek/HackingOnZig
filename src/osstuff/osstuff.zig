@@ -44,7 +44,10 @@ pub fn main() !void {
             try cmd.append(argc);
         }
 
-        output = try execCmd(allocator, &env_map, cmd.toOwnedSlice(), &code, .Inherit);
+        //output = try execCmd(allocator, &env_map, cmd.toOwnedSlice(), &code, .Inherit);
+        // TODO: Use the following for Zig 0.11 onward
+        const argv = try cmd.toOwnedSlice();
+        output = try execCmd(allocator, &env_map, argv, &code, .Inherit);
         std.log.info("code => {d} output => {s}\n", .{ code, output });
     }
 }

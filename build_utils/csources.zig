@@ -79,7 +79,7 @@ pub const Src = union(SrcType) {
 
 pub const CollectParams = struct {
     libExeObjStep: *LibExeObjStep,
-    libs: ?[]*LibExeObjStep = undefined,
+    libs: ?[]*LibExeObjStep = &.{},
     src: Src,
 };
 

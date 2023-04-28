@@ -14,7 +14,8 @@ pub fn build(b: *Builder) void {
 
     // The standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
+    //const mode = b.standardReleaseOptions();
+    const mode = b.standardOptimizeOption(.{});
 
     // Build the Zig Executable Targets
     {
@@ -74,15 +75,15 @@ pub fn build(b: *Builder) void {
         //    .src = "src/zintrfcs/zintrfcs.zig",
         //    .usage = "run_zintrfcs",
         //});
-        zigExe(.{
-            .builder = b,
-            .target = target,
-            .mode = mode,
-            .name = "zsrvr",
-            .src = "src/zsrvr/zsrvr.zig",
-            .usage = "run_zsrvr",
-            .use_stage1 = true,
-        });
+        //zigExe(.{
+        //    .builder = b,
+        //    .target = target,
+        //    .mode = mode,
+        //    .name = "zsrvr",
+        //    .src = "src/zsrvr/zsrvr.zig",
+        //    .usage = "run_zsrvr",
+        //    //.use_stage1 = true,
+        //});
         zigExe(.{
             .builder = b,
             .target = target,
@@ -180,9 +181,21 @@ pub fn build(b: *Builder) void {
 
     // Run all the unit tests
     {
-        const unit_tests = b.addTest("src/unit_tests.zig");
-        unit_tests.setTarget(target);
-        unit_tests.setBuildMode(mode);
+        //const unit_tests = b.addTest("src/unit_tests.zig");
+        //unit_tests.setTarget(target);
+        //unit_tests.setBuildMode(mode);
+        //
+        //const test_step = b.step("unit_tests", "Run the unit tests");
+        //test_step.dependOn(&unit_tests.step);
+
+        const unit_tests = b.addTest(.{
+            .root_source_file = .{ .path = "src/unit_tests.zig" },
+            .target = target,
+            .optimize = mode,
+        });
+
+        const run_unit_tests = b.addRunArtifact(unit_tests);
+        _ = run_unit_tests;
 
         const test_step = b.step("unit_tests", "Run the unit tests");
         test_step.dependOn(&unit_tests.step);

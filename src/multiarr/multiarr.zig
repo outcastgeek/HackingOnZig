@@ -25,6 +25,7 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
     var monsters: MonsterList = .{};
+    // var monsters = MonsterList{};
     defer monsters.deinit(gpa.allocator());
 
     var prng = std.rand.DefaultPrng.init(blk: {
@@ -65,5 +66,10 @@ pub fn main() !void {
     // Heal all monsters
     for (monsters.items(.hp)) |*hp| {
         hp.* = 100;
+    }
+
+    // Heal water monsters
+    for (monsters.items(.element), monsters.items(.hp)) |elem, *hp| {
+        if (elem == .water) hp.* = 100;
     }
 }

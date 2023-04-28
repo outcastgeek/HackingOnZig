@@ -21,14 +21,22 @@ pub const ZigExeParams = struct {
 };
 
 pub fn zigExe(zp: ZigExeParams) void {
-    const exe = zp.builder.addExecutable(zp.name, zp.src);
-    exe.setTarget(zp.target);
-    exe.setBuildMode(zp.mode);
+    const exe = zp.builder.addExecutable(.{
+        .name = zp.name,
+        .root_source_file = .{ .path = zp.src },
+        .target = zp.target,
+        .optimize = zp.mode,
+    });
+    //const exe = zp.builder.addExecutable(zp.name, zp.src);
+    //exe.setTarget(zp.target);
+    //exe.setBuildMode(zp.mode);
     // exe.setVerboseCC(true);
     // exe.setVerboseLink(true);
-    exe.use_stage1 = zp.use_stage1;
-    exe.install();
-    const run_cmd = exe.run();
+    //    exe.use_stage1 = zp.use_stage1;
+    zp.builder.installArtifact(exe);
+    //exe.install();
+    const run_cmd = zp.builder.addRunArtifact(exe);
+    //const run_cmd = exe.run();
     if (zp.builder.args) |args| {
         run_cmd.addArgs(args);
     }
@@ -88,15 +96,21 @@ pub const ZigCExeParams = struct {
     name: []const u8,
     src: []const u8,
     ccSrc: ?csources.Src,
-    libs: ?[]*LibExeObjStep = undefined,
+    libs: ?[]*LibExeObjStep = &.{},
     usage: []const u8,
     use_stage1: bool = false,
 };
 
 pub fn zcExe(zcp: ZigCExeParams) void {
-    const exe = zcp.builder.addExecutable(zcp.name, zcp.src);
-    exe.setTarget(zcp.target);
-    exe.setBuildMode(zcp.mode);
+    const exe = zcp.builder.addExecutable(.{
+        .name = zcp.name,
+        .root_source_file = .{ .path = zcp.src },
+        .target = zcp.target,
+        .optimize = zcp.mode,
+    });
+    //const exe = zcp.builder.addExecutable(zcp.name, zcp.src);
+    //exe.setTarget(zcp.target);
+    //exe.setBuildMode(zcp.mode);
 
     if (zcp.ccSrc) |ccSrc| {
         //const cclibName = std.mem.concat(zcp.builder.allocator, u8, &.{
@@ -132,8 +146,10 @@ pub fn zcExe(zcp: ZigCExeParams) void {
     // exe.setVerboseCC(true);
     // exe.setVerboseLink(true);
     exe.use_stage1 = zcp.use_stage1;
-    exe.install();
-    const run_cmd = exe.run();
+    zcp.builder.installArtifact(exe);
+    //exe.install();
+    const run_cmd = zcp.builder.addRunArtifact(exe);
+    //const run_cmd = exe.run();
     if (zcp.builder.args) |args| {
         run_cmd.addArgs(args);
     }
@@ -210,13 +226,18 @@ pub const CExeParams = struct {
     src: csources.Src,
     usage: []const u8,
     static: bool = true,
-    libs: ?[]*LibExeObjStep = undefined,
+    libs: ?[]*LibExeObjStep = &.{},
 };
 
 pub fn cExe(cp: CExeParams) void {
-    var exe = cp.builder.addExecutable(cp.name, null);
-    exe.setTarget(cp.target);
-    exe.setBuildMode(cp.mode);
+    var exe = cp.builder.addExecutable(.{
+        .name = cp.name,
+        .target = cp.target,
+        .optimize = cp.mode,
+    });
+    //var exe = cp.builder.addExecutable(cp.name, null);
+    //exe.setTarget(cp.target);
+    //exe.setBuildMode(cp.mode);
 
     var cs = csources.init(cp.builder.allocator);
     cs.collectInputs(.{
@@ -225,8 +246,10 @@ pub fn cExe(cp: CExeParams) void {
         .src = cp.src,
     });
 
-    exe.install();
-    const run_cmd = exe.run();
+    cp.builder.installArtifact(exe);
+    //exe.install();
+    const run_cmd = cp.builder.addRunArtifact(exe);
+    //const run_cmd = exe.run();
     if (cp.builder.args) |args| {
         run_cmd.addArgs(args);
     }
@@ -248,7 +271,7 @@ pub const CLibParams = struct {
     src: csources.Src,
     usage: []const u8,
     static: bool = true,
-    libs: ?[]*LibExeObjStep = undefined,
+    libs: ?[]*LibExeObjStep = &.{},
     kind: LibExeObjStep.SharedLibKind = LibExeObjStep.SharedLibKind.unversioned,
 };
 
