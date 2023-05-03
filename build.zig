@@ -67,6 +67,14 @@ pub fn build(b: *Builder) void {
             .src = "src/multiarr/multiarr.zig",
             .usage = "run_multiarr",
         });
+        zigExe(.{
+            .builder = b,
+            .target = target,
+            .mode = mode,
+            .name = "multiobjectloops",
+            .src = "src/multiobjectloops/multiobjectloops.zig",
+            .usage = "run_multiobjectloops",
+        });
         //zigExe(.{
         //    .builder = b,
         //    .target = target,
