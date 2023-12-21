@@ -148,7 +148,8 @@ pub fn collectInputs(self: *Self, params: CollectParams) void {
         };
         if (src.includeDir) |includeDir| {
             // params.libExeObjStep.addIncludeDir(includeDir);
-            params.libExeObjStep.addIncludePath(includeDir);
+            // params.libExeObjStep.addIncludePath(includeDir);
+            params.libExeObjStep.addIncludePath(.{ .path = includeDir });
         }
         params.libExeObjStep.addCSourceFiles(sources, src.flags);
     }

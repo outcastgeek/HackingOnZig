@@ -4,6 +4,8 @@ const bldhlpr = @import("build_utils/helper.zig");
 const zigExe = bldhlpr.zigExe;
 const cExe = bldhlpr.cExe;
 const zcExe = bldhlpr.zcExe;
+const LibExeObjStep = std.build.LibExeObjStep;
+const Dep = bldhlpr.Dep;
 
 pub fn build(b: *Builder) void {
     // Standard target option allows the person running `zig build` to choose
@@ -117,6 +119,33 @@ pub fn build(b: *Builder) void {
         //    },
         //    .usage = "run_zc_interop",
         //});
+        {
+            // Dependencies
+            const zap_hello_deps = init_deps: {
+                var artifacts = [_][]const u8{"facil.io"};
+                var deps = [_]Dep{
+                    .{
+                        .name = "zigcoro",
+                        .moduleName = "libcoro",
+                    },
+                    .{
+                        .name = "zap",
+                        .moduleName = "zap",
+                        .artifacts = &artifacts,
+                    },
+                };
+                break :init_deps &deps;
+            };
+            zigExe(.{
+                .builder = b,
+                .target = target,
+                .mode = mode,
+                .name = "zap_hello",
+                .src = "src/zap_hello/zap_hello.zig",
+                .dependencies = zap_hello_deps,
+                .usage = "run_zap_hello",
+            });
+        }
     }
 
     // Build the C/C++ Executable Targets

@@ -1,14 +1,24 @@
 const std = @import("std");
+const Tuple = std.meta.Tuple;
 const fs = std.fs;
 const Builder = std.build.Builder;
 const LibExeObjStep = std.build.LibExeObjStep;
 const CrossTarget = std.zig.CrossTarget;
 const Mode = std.builtin.Mode;
 const Allocator = std.mem.Allocator;
+const Compile = std.Build.Step.Compile;
+const Dependency = std.build.Dependency;
+const Module = std.build.Module;
 const strsources = @import("strsources.zig");
 const csources = @import("csources.zig");
 const SrcType = csources.SrcType;
 pub const getLines = strsources.getLines;
+
+pub const Dep = struct {
+    name: []const u8,
+    moduleName: []const u8,
+    artifacts: ?[][]const u8 = &.{},
+};
 
 pub const ZigExeParams = struct {
     builder: *Builder,
@@ -18,6 +28,7 @@ pub const ZigExeParams = struct {
     src: []const u8,
     usage: []const u8,
     use_stage1: bool = false,
+    dependencies: ?[]Dep = &.{},
 };
 
 pub fn zigExe(zp: ZigExeParams) void {
@@ -33,6 +44,11 @@ pub fn zigExe(zp: ZigExeParams) void {
     // exe.setVerboseCC(true);
     // exe.setVerboseLink(true);
     //    exe.use_stage1 = zp.use_stage1;
+
+    if (zp.dependencies) |deps| {
+        addDeps(exe, zp.builder, zp.target, zp.mode, deps);
+    }
+
     zp.builder.installArtifact(exe);
     //exe.install();
     const run_cmd = zp.builder.addRunArtifact(exe);
@@ -60,6 +76,8 @@ pub const ZigLibParams = struct {
     static: bool = true,
     kind: LibExeObjStep.SharedLibKind = LibExeObjStep.SharedLibKind.unversioned,
     use_stage1: bool = false,
+    dependencies: ?[]Dep = &.{},
+    libs: ?[]*LibExeObjStep = &.{},
 };
 
 pub fn zigLib(zp: ZigLibParams) *LibExeObjStep {
@@ -77,6 +95,11 @@ pub fn zigLib(zp: ZigLibParams) *LibExeObjStep {
     // lib.setVerboseCC(true);
     // lib.setVerboseLink(true);
     lib.use_stage1 = zp.use_stage1;
+
+    if (zp.dependencies) |deps| {
+        addDeps(lib, zp.builder, zp.target, zp.mode, deps);
+    }
+
     lib.install();
     const help = std.fmt.allocPrint(zp.builder.allocator, "Build {s}", .{zp.src}) catch |err| {
         std.log.err("ALLOCATION_ERROR:::: {}", .{err});
@@ -425,4 +448,27 @@ fn collectCSources(csp: CCppSrcParams) std.ArrayList([]const u8) {
     // }
 
     return sources;
+}
+
+pub fn addDeps(
+    bld: *Compile,
+    builder: *Builder,
+    target: CrossTarget,
+    mode: Mode,
+    dependencies: []Dep,
+) void {
+    for (dependencies) |dependency| {
+        const name = dependency.name;
+        const moduleName = dependency.moduleName;
+        const dep = builder.dependency(name, .{ .target = target, .optimize = mode });
+        const dep_module = dep.module(moduleName);
+        bld.addModule(name, dep_module);
+
+        if (dependency.artifacts) |artifacts| {
+            for (artifacts) |artifact| {
+                const dep_artifact = dep.artifact(artifact);
+                bld.linkLibrary(dep_artifact);
+            }
+        }
+    }
 }

@@ -1,0 +1,16 @@
+.{
+    .name = "HackingOnZig",
+    .version = "0.0.1",
+
+    .dependencies = .{
+        .zigcoro = .{
+            .url = "https://api.github.com/repos/rsepassi/zigcoro/tarball/v0.5.0",
+            .hash = "1220ff5ad2a9980015a284f5baa83aa0624a4cd2f9e427bc873872c9d699b00042bb",
+        },
+        // zap v0.1.14-pre
+        .zap = .{
+            .url = "https://github.com/zigzap/zap/archive/refs/tags/v0.1.14-pre.tar.gz",
+            .hash = "122067d12bc7abb93f7ce623f61b94cadfdb180cef12da6559d092e6b374202acda3",
+        },
+    },
+}
